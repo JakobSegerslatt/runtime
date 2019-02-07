@@ -27,22 +27,22 @@
     margin-right: 10px;
 }
 
-.left-column {
+.inputs .left-column {
     width: 150px;
 }
 
-.minute-field {
-  margin-right: 10px;
-}
-
-.left-column-half {
+.inputs .left-column-half {
     width: 70px;
 }
 
-.right-column {
+.inputs .minute-field {
+    margin-right: 10px;
+}
+
+.inputs .right-column {
     min-width: 110px;
 }
 
-.time-column {
-    width: 80px;
+.inputs .time-column {
+    width: 83px;
 }

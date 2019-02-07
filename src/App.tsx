@@ -5,6 +5,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 
 import './App.css';
 import { string } from 'prop-types';
+import { theme as runtimeTheme } from './theme';
+import { MuiThemeProvider } from '@material-ui/core/styles';
 
 enum LenghtType {
   Km = 'km',
@@ -53,13 +55,16 @@ const paceTypes = [
   },
 ];
 
-
 interface IState {
-  user: string;
+  /** Distance variables */
   length: number;
   lengthType: LenghtType;
+  /** Pace variables */
   pace: number;
+  paceMinutes: number;
+  paceSeconds: number;
   paceType: PaceType;
+  /** Time variables */
   hours: number;
   minutes: number;
   seconds: number;
@@ -70,14 +75,14 @@ interface IState {
 class App extends Component {
   state: IState;
 
-
   constructor(props) {
     super(props);
     this.state = {
-      user: 'hej',
       length: 5,
       lengthType: LenghtType.Km,
       pace: 5,
+      paceMinutes: 5,
+      paceSeconds: 0,
       paceType: PaceType.MinutesPerKm,
       hours: 0,
       minutes: 0,
@@ -119,28 +124,37 @@ class App extends Component {
       });
     }
     else if (itemToCalculate === 'pace') {
-      const length = this.getLengthInMeters();
-      const seconds = this.getTimeInSeconds();
-      let pace = 0;
+      var meters = this.getLengthInMeters();
+      var seconds = this.getTimeInSeconds();
+      var minutes = seconds / 60;
+      var km = meters / 1000;
+      var miles = meters / 1609.344;
+      var hours = seconds / 3600;
+      var pace = 0;
+      var paceMinutes = 0;
+      var paceSeconds = 0;
       // Convert the pace before setting the value (if nessesary)
       switch (this.state.paceType) {
         case PaceType.MinutesPerKm:
-          pace = (seconds / 60) / (length / 1000);
-          // Convert the decimal part to seconds
-          // TODO
+          pace = minutes / km;
+          paceMinutes = Math.floor(minutes / km);
+          paceSeconds = ((seconds/km) % 60);
+          // TODO: Convert the decimal part to seconds for pace
           break;
         case PaceType.KmPerHour:
-          pace = (length / 1000) / (seconds / 3600);
+          pace = km / hours;
           break;
         case PaceType.MilesPerHour:
-          pace = (length / 1609.344) / (seconds / 3600);
+          pace = miles / hours;
           break;
         case PaceType.MetersPerSecond:
-          pace = length / seconds;
+          pace = meters / seconds;
           break;
       }
       this.setState({
-        pace: pace
+        pace: pace,
+        paceMinutes: paceMinutes,
+        paceSeconds: paceSeconds
       })
     }
     else if (itemToCalculate === 'time') {
@@ -173,10 +187,12 @@ class App extends Component {
 
   getPaceInMetersPerSecond(): number {
     let pace = this.state.pace;
+    let paceMinutes = this.state.paceMinutes;
+    let paceSeconds = this.state.paceSeconds;
     // Convert pace (if nessesary to m/s)
     switch (this.state.paceType) {
       case PaceType.MinutesPerKm:
-        pace = 1 / (pace * 60 / 1000);
+        pace = 1000 / (paceMinutes * 60 + paceSeconds);
         break;
       case PaceType.KmPerHour:
         pace = pace * 1000 / 3600;
@@ -237,10 +253,10 @@ class App extends Component {
           className="left-column-half minute-field"
           type="number"
           InputProps={{ inputProps: { min: 0 } }}
-          value={this.state.pace}
+          value={this.state.paceMinutes}
           label="Minuter"
           // className={classes.textField}
-          onChange={this.handleChange('pace')}
+          onChange={this.handleChange('paceMinutes')}
           margin="normal"
           variant="outlined"
         />
@@ -248,10 +264,10 @@ class App extends Component {
           className="left-column-half"
           type="number"
           InputProps={{ inputProps: { min: 0, max: 60 } }}
-          value={this.state.pace}
+          value={this.state.paceSeconds}
           label="Sekunder"
           // className={classes.textField}
-          onChange={this.handleChange('pace')}
+          onChange={this.handleChange('paceSeconds')}
           margin="normal"
           variant="outlined"
         />
@@ -273,103 +289,106 @@ class App extends Component {
 
     return (
       <div className="app">
-        <RtToolbar title="🏃 Runtime" subTitle="- Check time, pace & distance"></RtToolbar>
+        <MuiThemeProvider theme={runtimeTheme}>
 
-        <div className="app-content">
+          <RtToolbar title="🏃 Runtime" subTitle="- Check time, pace & distance"></RtToolbar>
 
-          <div className="inputs">
-            <b>🗺️ Sträcka</b>
-            <div className="input-row">
-              <TextField
-                className="left-column"
-                type="number"
-                value={this.state.length}
-                InputProps={{ inputProps: { min: 0 } }}
-                // className={classes.textField}
-                onChange={this.handleChange('length')}
-                margin="normal"
-                variant="outlined"
-              />
-              <TextField
-                select
-                className="right-column"
-                label=""
-                value={this.state.lengthType}
-                onChange={this.handleChange('lengthType')}
-                margin="normal"
-                variant="outlined"
-              >
-                {lengthTypes.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
+          <div className="app-content">
 
+            <div className="inputs">
+              <b>🗺️ Sträcka</b>
+              <div className="input-row">
+                <TextField
+                  className="left-column"
+                  type="number"
+                  value={this.state.length}
+                  InputProps={{ inputProps: { min: 0 } }}
+                  // className={classes.textField}
+                  onChange={this.handleChange('length')}
+                  margin="normal"
+                  variant="outlined"
+                />
+                <TextField
+                  select
+                  className="right-column"
+                  label=""
+                  value={this.state.lengthType}
+                  onChange={this.handleChange('lengthType')}
+                  margin="normal"
+                  variant="outlined"
+                >
+                  {lengthTypes.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+              </div>
+              <b>🏃 Hastighet</b>
+              <div className="input-row">
+                {paceFields}
+                <TextField
+                  select
+                  className="right-column"
+                  label=""
+                  value={this.state.paceType}
+                  onChange={this.handleChange('paceType')}
+                  margin="normal"
+                  variant="outlined"
+                >
+                  {paceTypes.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </div>
+              <b>⏱️ Tid</b>
+              <div className="input-row">
+                <TextField
+                  className="time-column"
+                  type="number"
+                  InputProps={{ inputProps: { min: 0 } }}
+                  value={this.state.hours}
+                  label="Timmar"
+                  // className={classes.textField}
+                  onChange={this.handleChange('hours')}
+                  margin="normal"
+                  variant="outlined"
+                />
+                <TextField
+                  className="time-column"
+                  type="number"
+                  InputProps={{ inputProps: { min: 0 } }}
+                  value={this.state.minutes}
+                  label="Minuter"
+                  // className={classes.textField}
+                  onChange={this.handleChange('minutes')}
+                  margin="normal"
+                  variant="outlined"
+                />
+                <TextField
+                  className="time-column"
+                  type="number"
+                  InputProps={{ inputProps: { min: 0 } }}
+                  value={this.state.seconds}
+                  label="Sekunder"
+                  // className={classes.textField}
+                  onChange={this.handleChange('seconds')}
+                  margin="normal"
+                  variant="outlined"
+                />
+              </div>
             </div>
-            <b>🏃 Hastighet</b>
-            <div className="input-row">
-              {paceFields}
-              <TextField
-                select
-                className="right-column"
-                label=""
-                value={this.state.paceType}
-                onChange={this.handleChange('paceType')}
-                margin="normal"
-                variant="outlined"
-              >
-                {paceTypes.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </div>
-            <b>⏱️ Tid</b>
-            <div className="input-row">
-              <TextField
-                className="time-column"
-                type="number"
-                InputProps={{ inputProps: { min: 0 } }}
-                value={this.state.hours}
-                label="Timmar"
-                // className={classes.textField}
-                onChange={this.handleChange('hours')}
-                margin="normal"
-                variant="outlined"
-              />
-              <TextField
-                className="time-column"
-                type="number"
-                InputProps={{ inputProps: { min: 0 } }}
-                value={this.state.minutes}
-                label="Minuter"
-                // className={classes.textField}
-                onChange={this.handleChange('minutes')}
-                margin="normal"
-                variant="outlined"
-              />
-              <TextField
-                className="time-column"
-                type="number"
-                InputProps={{ inputProps: { min: 0 } }}
-                value={this.state.seconds}
-                label="Sekunder"
-                // className={classes.textField}
-                onChange={this.handleChange('seconds')}
-                margin="normal"
-                variant="outlined"
-              />
-            </div>
+
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+            }}>Run, run run!</div>
+
           </div>
-
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-          }}>Run, run run!</div>
-
-        </div>
+        </MuiThemeProvider>
 
       </div>
     );
