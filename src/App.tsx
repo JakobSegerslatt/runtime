@@ -7,6 +7,7 @@ import './App.css';
 import { string } from 'prop-types';
 import { theme as runtimeTheme } from './theme';
 import { MuiThemeProvider } from '@material-ui/core/styles';
+import Checkbox from '@material-ui/core/Checkbox';
 
 enum LenghtType {
   Km = 'km',
@@ -21,7 +22,7 @@ enum PaceType {
   MilesPerHour = 'miles/s',
 }
 
-const lengthTypes = [
+var lengthTypes = [
   {
     value: LenghtType.Km,
     label: 'km',
@@ -36,7 +37,7 @@ const lengthTypes = [
   },
 ];
 
-const paceTypes = [
+var paceTypes = [
   {
     value: PaceType.MinutesPerKm,
     label: 'min/km',
@@ -70,6 +71,7 @@ interface IState {
   seconds: number;
   /** The last item in this array gets calculated everytime this.calculate gets called. */
   latestEdited: string[];
+  itemToCalculate: 'length' | 'pace' | 'time';
 }
 
 class App extends Component {
@@ -87,7 +89,8 @@ class App extends Component {
       hours: 0,
       minutes: 0,
       seconds: 0,
-      latestEdited: ['length', 'pace', 'time']
+      latestEdited: ['length', 'pace', 'time'],
+      itemToCalculate: 'time',
     }
     this.calculate = this.calculate.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -101,14 +104,13 @@ class App extends Component {
   }
 
   calculate() {
-    console.log(this.state);
-
     // Check which is the property to calc
-    const itemToCalculate = this.state.latestEdited[this.state.latestEdited.length - 1]
+    var itemToCalculate = this.state.latestEdited[this.state.latestEdited.length - 1]
+    this.setState({ itemToCalculate: itemToCalculate });
 
     if (itemToCalculate === 'length') {
-      const pace = this.getPaceInMetersPerSecond();
-      const seconds = this.getTimeInSeconds();
+      var pace = this.getPaceInMetersPerSecond();
+      var seconds = this.getTimeInSeconds();
       let length = pace * seconds;
       // Convert the length before setting the value (if nessesary)
       switch (this.state.lengthType) {
@@ -138,7 +140,7 @@ class App extends Component {
         case PaceType.MinutesPerKm:
           pace = minutes / km;
           paceMinutes = Math.floor(minutes / km);
-          paceSeconds = ((seconds/km) % 60);
+          paceSeconds = Math.floor((seconds / km) % 60);
           // TODO: Convert the decimal part to seconds for pace
           break;
         case PaceType.KmPerHour:
@@ -158,10 +160,10 @@ class App extends Component {
       })
     }
     else if (itemToCalculate === 'time') {
-      const length = this.getLengthInMeters();
-      const pace = this.getPaceInMetersPerSecond();
+      var length = this.getLengthInMeters();
+      var pace = this.getPaceInMetersPerSecond();
       let timeInSeconds = length / pace;
-      const hours = Math.floor(timeInSeconds / 3600);
+      var hours = Math.floor(timeInSeconds / 3600);
       timeInSeconds %= 3600;
       this.setState({
         hours: hours,
@@ -172,7 +174,7 @@ class App extends Component {
   }
 
   getLengthInMeters(): number {
-    let length = this.state.length;
+    let length = Number(this.state.length);
     // Convert length (if nessesary to meters)
     switch (this.state.lengthType) {
       case LenghtType.Km:
@@ -186,9 +188,9 @@ class App extends Component {
   }
 
   getPaceInMetersPerSecond(): number {
-    let pace = this.state.pace;
-    let paceMinutes = this.state.paceMinutes;
-    let paceSeconds = this.state.paceSeconds;
+    let pace = Number(this.state.pace);
+    let paceMinutes = Number(this.state.paceMinutes);
+    let paceSeconds = Number(this.state.paceSeconds);
     // Convert pace (if nessesary to m/s)
     switch (this.state.paceType) {
       case PaceType.MinutesPerKm:
@@ -209,7 +211,13 @@ class App extends Component {
 
   /** Combines the hours, minutes and seconds into a single value */
   getTimeInSeconds(): number {
-    return (this.state.hours * 3600) + (this.state.minutes * 60) + (this.state.seconds);
+    return (Number(this.state.hours) * 3600)
+      + (Number(this.state.minutes) * 60)
+      + Number(this.state.seconds);
+  }
+
+  handleCheckboxChange = (name: string) => (event: any) => {
+    this.setItemToCalculate(name);
   }
 
   /**
@@ -221,7 +229,6 @@ class App extends Component {
     let value: string = event.target.value;
     this.setState({ [name]: value }, () => {
 
-
       if (name.match(/hours|minutes|seconds/)) {
         name = 'time';
       }
@@ -231,9 +238,8 @@ class App extends Component {
        * i.e. we dont edit the latestEdited array
        */
       if (name.match(/length|pace|time/)) {
-        // Remove the property and unshift it in so it is the first item in the array
-        const latestEdited = this.state.latestEdited;
-        const index = latestEdited.indexOf(name);
+        var latestEdited = this.state.latestEdited;
+        var index = latestEdited.indexOf(name);
         if (index !== -1) {
           latestEdited.splice(index, 1)
         }
@@ -243,6 +249,20 @@ class App extends Component {
         this.calculate();
       }
     });
+  }
+
+  /**
+    * Remove the property and unshift it in so it is the first item in the array
+    * then call this.calculate();
+    */
+  setItemToCalculate(name: string) {
+    var latestEdited = this.state.latestEdited;
+    var index = latestEdited.indexOf(name);
+    if (index !== -1) {
+      latestEdited.splice(index, 1)
+    }
+    latestEdited.push(name);
+    this.setState({ latestEdited: latestEdited }, () => this.calculate())
   }
 
   render() {
@@ -263,7 +283,7 @@ class App extends Component {
         <TextField
           className="left-column-half"
           type="number"
-          InputProps={{ inputProps: { min: 0, max: 60 } }}
+          InputProps={{ inputProps: { min: 0, max: 59 } }}
           value={this.state.paceSeconds}
           label="Sekunder"
           // className={classes.textField}
@@ -323,7 +343,10 @@ class App extends Component {
                     </MenuItem>
                   ))}
                 </TextField>
-
+                <Checkbox
+                  checked={this.state.itemToCalculate === 'length'}
+                  onChange={this.handleCheckboxChange('length')}
+                ></Checkbox>
               </div>
               <b>🏃 Hastighet</b>
               <div className="input-row">
@@ -343,6 +366,10 @@ class App extends Component {
                     </MenuItem>
                   ))}
                 </TextField>
+                <Checkbox
+                  checked={this.state.itemToCalculate === 'pace'}
+                  onChange={this.handleCheckboxChange('pace')}
+                ></Checkbox>
               </div>
               <b>⏱️ Tid</b>
               <div className="input-row">
@@ -360,7 +387,7 @@ class App extends Component {
                 <TextField
                   className="time-column"
                   type="number"
-                  InputProps={{ inputProps: { min: 0 } }}
+                  InputProps={{ inputProps: { min: 0, max: 59 } }}
                   value={this.state.minutes}
                   label="Minuter"
                   // className={classes.textField}
@@ -371,7 +398,7 @@ class App extends Component {
                 <TextField
                   className="time-column"
                   type="number"
-                  InputProps={{ inputProps: { min: 0 } }}
+                  InputProps={{ inputProps: { min: 0, max: 59 } }}
                   value={this.state.seconds}
                   label="Sekunder"
                   // className={classes.textField}
@@ -379,13 +406,23 @@ class App extends Component {
                   margin="normal"
                   variant="outlined"
                 />
+                <Checkbox
+                  checked={this.state.itemToCalculate === 'time'}
+                  onChange={this.handleCheckboxChange('time')}
+                ></Checkbox>
               </div>
             </div>
 
-            <div style={{
-              display: "flex",
-              justifyContent: "center",
-            }}>Run, run run!</div>
+            <span className="hint-text">Raden markerad med
+            <Checkbox
+                classes={{
+                  root: 'footer-checkbox'
+                }}
+                disableRipple
+                disableTouchRipple
+                checked={true}>
+              </Checkbox>
+              kommer att räknas ut.</span>
 
           </div>
         </MuiThemeProvider>
