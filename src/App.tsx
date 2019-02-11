@@ -173,6 +173,7 @@ class App extends Component {
     }
   }
 
+  /** @returns the users input for the distance as m */
   getLengthInMeters(): number {
     let length = Number(this.state.length);
     // Convert length (if nessesary to meters)
@@ -187,6 +188,7 @@ class App extends Component {
     return length;
   }
 
+  /** @returns whatever pace/speed the user selected as m/s */
   getPaceInMetersPerSecond(): number {
     let pace = Number(this.state.pace);
     let paceMinutes = Number(this.state.paceMinutes);
