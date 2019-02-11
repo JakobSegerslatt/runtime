@@ -11,6 +11,13 @@ export const theme = createMuiTheme({
         },
         // error: will use the default color
     },
+    overrides: {
+        MuiInputBase: {
+            root: {
+                'font-size': '1.4rem',
+            }
+        },
+    },
     typography: {
         useNextVariants: true,
     }
