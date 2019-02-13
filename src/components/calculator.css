@@ -1,0 +1,33 @@
+
+.inputs>* {
+    margin-bottom: 5px;
+}
+
+.input-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.inputs .input-row>* {
+    margin-right: 10px;
+}
+
+.inputs .left-column {
+    width: 150px;
+}
+
+.inputs .left-column-half {
+    width: 70px;
+}
+
+.inputs .minute-field {
+    margin-right: 10px;
+}
+
+.inputs .right-column {
+    min-width: 125px;
+}
+
+.inputs .time-column {
+    width: 88px;
+}

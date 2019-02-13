@@ -20,9 +20,12 @@ export class RtToolbar extends React.PureComponent<IProps, IState> {
     }
 
     render() {
-        return <div className="app-toolbar">
-            <div className="logo">{this.state.title}</div>
-            <div className="logo-subtitle">{this.state.subTitle}</div>
+        return <div className="toolbar-wrapper">
+            <img className="logo-img" src="/images/icons/icon-72x72.png" alt="Logo" />
+            <div className="toolbar-content">
+                <div className="logo">{this.state.title}</div>
+                <div className="logo-subtitle">{this.state.subTitle}</div>
+            </div>
         </div>
     }
 

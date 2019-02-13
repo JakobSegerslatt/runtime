@@ -14,7 +14,7 @@ export const theme = createMuiTheme({
     overrides: {
         MuiInputBase: {
             root: {
-                'font-size': '1.4rem',
+                'font-size': '1.3rem',
             }
         },
     },
