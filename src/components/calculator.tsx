@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { UPDATE } from '../actions/actions';
 import { store } from '../store';
+import { Timer } from './timer';
 
 enum LenghtType {
     Km = 'km',
@@ -63,6 +64,7 @@ type RowTypes = 'length' | 'pace' | 'time';
 interface IState {
     /** Distance variables */
     length: number;
+    lengthInMeters: number;
     lengthType: LenghtType;
     /** Pace variables */
     pace: number;
@@ -79,11 +81,15 @@ interface IState {
 }
 
 export class RtCalculator extends React.PureComponent<IProps, IState> {
+    timerId: any;
+    timerActive = false;
+    timer!: Timer;
 
     constructor(props) {
         super(props);
         this.state = {
             length: 5,
+            lengthInMeters: 5000,
             lengthType: LenghtType.Km,
             pace: 5,
             paceMinutes: 5,
@@ -100,18 +106,27 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
         this.getLengthInMeters = this.getLengthInMeters.bind(this);
         this.getPaceInMetersPerSecond = this.getPaceInMetersPerSecond.bind(this);
         this.getTimeInSeconds = this.getTimeInSeconds.bind(this);
-        this.setLength = this.setLength.bind(this);
+        this.getTimeInSeconds = this.getTimeInSeconds.bind(this);
+        this.countdownOneSecond = this.countdownOneSecond.bind(this);
     }
 
     componentDidMount() {
         this.calculate();
         store.subscribe(() => {
             var state = store.getState().info;
-            debugger;
+
+            // Start the countdown
+            if (state.isTracking && !this.timerActive) {
+                this.startTimer();
+            } else if (!state.isTracking && this.timerActive) {
+                this.stopTimer();
+            }
+
+            // Calculate the new distance
             // Add the distanceTravel to our distance and calulate again
             var distanceTraveled = state.distanceTraveled;
             var oldDistance = this.getLengthInMeters();
-            var newDistance = Number(oldDistance + distanceTraveled);
+            var newDistance = Number(oldDistance - distanceTraveled);
 
             this.setLength(newDistance, () => {
                 this.setItemToCalculate('pace');
@@ -140,22 +155,21 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
         else if (itemToCalculate === 'time') {
             var meters = this.getLengthInMeters();
             var pace = this.getPaceInMetersPerSecond();
-            this.setTime(meters, pace);
+            var seconds = meters / pace;
+            this.setTime(seconds);
         }
+    }
+
+    countdownOneSecond(this) {
+        var seconds = this.getTimeInSeconds();
+        seconds = seconds - 1;
+        this.setTime(seconds);
     }
 
     /** @returns the users input for the distance as m */
     getLengthInMeters(): number {
-        let length = Number(this.state.length);
+        let length = Number(this.state.lengthInMeters);
         // Convert length (if nessesary to meters)
-        switch (this.state.lengthType) {
-            case LenghtType.Km:
-                length = length * 1000;
-                break;
-            case LenghtType.miles:
-                length = length * 1609.344;
-                break;
-        }
         return length;
     }
 
@@ -244,21 +258,25 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
     }
 
     /** Accepts the length in meters and formats it before setting to state */
-    setLength(length: number, callback?: () => void): any {
+    setLength(lengthInMeters: number, callback?: () => void): any {
+        var displayLength = 0;
         // Convert the length before setting the value (if nessesary)
         switch (this.state.lengthType) {
             case LenghtType.Km:
-                length = length / 1000;
+                displayLength = lengthInMeters / 1000;
                 // Convert to maximum 2 decimals
-                length = Number(length.toFixed(2));
+                displayLength = Number(displayLength.toFixed(2));
                 break;
             case LenghtType.miles:
-                length = length / 1609.344;
+                displayLength = lengthInMeters / 1609.344;
                 // Convert to maximum 2 decimals
-                length = Number(length.toFixed(2));
+                displayLength = Number(displayLength.toFixed(2));
                 break;
         }
-        this.setState({ length: length }, callback);
+        this.setState({
+            length: displayLength,
+            lengthInMeters: lengthInMeters
+        }, callback);
     }
 
     /** Convert the pace before setting the value (if nessesary) */
@@ -295,8 +313,7 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
     }
 
     /** Convert the length before setting the value (if nessesary)  */
-    setTime(meters: number, pace: number, callback?: () => void): any {
-        let timeInSeconds = meters / pace;
+    setTime(timeInSeconds: number, callback?: () => void): any {
         var hours = Math.floor(timeInSeconds / 3600);
         timeInSeconds %= 3600;
         this.setState({
@@ -304,6 +321,20 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
             minutes: Math.floor(timeInSeconds / 60),
             seconds: Math.floor(timeInSeconds % 60),
         }, callback);
+    }
+
+    startTimer() {
+        this.timerActive = true;
+        if (this.timer) {
+            this.timer.stop();
+        }
+        this.timer = new Timer(this.countdownOneSecond, 1000);
+    }
+
+    stopTimer() {
+        this.timer.stop();
+        this.timer = null as any;
+        this.timerActive = false;
     }
 
     render() {

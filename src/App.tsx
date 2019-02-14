@@ -25,7 +25,7 @@ class App extends Component {
 
             <RtCalculator></RtCalculator>
 
-            {/* <RtPositioning></yRtPositioning> */}
+            <RtPositioning></RtPositioning>
 
             <span className="hint-text">Raden markerad med
             <Checkbox

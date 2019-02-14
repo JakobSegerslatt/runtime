@@ -1,6 +1,7 @@
 import React, { CSSProperties } from "react";
 import IconButton from "@material-ui/core/IconButton";
 import PlayArrow from '@material-ui/icons/PlayArrow';
+import Pause  from '@material-ui/icons/Pause';
 // REDUX
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -22,6 +23,7 @@ interface IState {
 
 export class RtPositioning extends React.PureComponent<{}, IState> {
   state: IState;
+  geoWatch: number = 0; // Watch for the geolocation tracking
 
   constructor(props) {
     super(props);
@@ -32,6 +34,7 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
     };
     this.startGps = this.startGps.bind(this);
     this.startTracking = this.startTracking.bind(this);
+    this.stopTracking = this.stopTracking.bind(this);
   }
 
   parseCords(coords: Coordinates): geolib.PositionAsDecimal | geolib.PositionAsSexadecimal {
@@ -50,7 +53,7 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
         isTracking: true
       }
     });
-    var position = navigator.geolocation.watchPosition((position) => {
+    this.geoWatch = navigator.geolocation.watchPosition((position) => {
       console.log('Position updated');
       console.log(position);
       var prevPosition = this.state.prevPosition;
@@ -62,20 +65,23 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
           1, // Precision of 1, round to closest meterä
         );
 
+        var totalDistanceTraveled = this.state.totalDistanceTraveled + distanceTraveled;
+
         store.dispatch({
           type: 'UPDATE',
           payload: {
             distanceTraveled: distanceTraveled
           }
         });
-
+        this.setState({
+          distanceTraveled: distanceTraveled,
+          totalDistanceTraveled: totalDistanceTraveled
+        });
         // store.dispatch({ type: 'UPDATE', payload: payload });
       }
-
       this.setState({
         prevPosition: position,
       });
-
     }, error => {
       console.log('Gps error');
       console.log(error);
@@ -90,7 +96,14 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
   };
 
   stopTracking() {
-
+    this.setState({ isTracking: false });
+    navigator.geolocation.clearWatch(this.geoWatch);
+    store.dispatch({
+      type: 'UPDATE',
+      payload: {
+        isTracking: false,
+      }
+    });
   }
 
   render() {
@@ -106,13 +119,18 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
       </IconButton >
     } else if (this.state.isTracking) {
       /* geolocation IS NOT available */
-      button = <span>Spårar position</span>
+      button = <IconButton aria-label="Pause" color="primary"
+        onClick={this.stopTracking}>
+        <Pause
+          style={{
+            fontSize: '86px'
+          }} />
+      </IconButton >
     }
     return <div>
       {button}
-      <div>
-        Distance: {this.state.distanceTraveled}
-      </div>
+      {/* <div>Distance: {this.state.distanceTraveled}</div> */}
+      {/* <div>Total distance: {this.state.totalDistanceTraveled}</div> */}
     </div>
   }
 
