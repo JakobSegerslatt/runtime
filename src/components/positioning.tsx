@@ -1,7 +1,7 @@
 import React, { CSSProperties } from "react";
 import IconButton from "@material-ui/core/IconButton";
 import PlayArrow from '@material-ui/icons/PlayArrow';
-import Pause  from '@material-ui/icons/Pause';
+import Pause from '@material-ui/icons/Pause';
 // REDUX
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -85,7 +85,9 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
     }, error => {
       console.log('Gps error');
       console.log(error);
-    });
+    }, {
+        enableHighAccuracy: true
+      });
   }
 
   startTracking() {
@@ -96,7 +98,11 @@ export class RtPositioning extends React.PureComponent<{}, IState> {
   };
 
   stopTracking() {
-    this.setState({ isTracking: false });
+    this.setState({
+      isTracking: false,
+      distanceTraveled: 0,
+      totalDistanceTraveled: 0,
+    });
     navigator.geolocation.clearWatch(this.geoWatch);
     store.dispatch({
       type: 'UPDATE',

@@ -122,16 +122,21 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
                 this.stopTimer();
             }
 
-            // Calculate the new distance
-            // Add the distanceTravel to our distance and calulate again
-            var distanceTraveled = state.distanceTraveled;
-            var oldDistance = this.getLengthInMeters();
-            var newDistance = Number(oldDistance - distanceTraveled);
+            if (state.isTracking) {
+                // Calculate the new distance
+                // Add the distanceTravel to our distance and calulate again
+                var distanceTraveled = state.distanceTraveled;
+                var oldDistance = this.getLengthInMeters();
+                var newDistance = Number(oldDistance - distanceTraveled);
 
-            this.setLength(newDistance, () => {
-                this.setItemToCalculate('pace');
-                this.calculate();
-            });
+                this.setLength(newDistance, () => {
+                    this.setItemToCalculate('pace');
+                    this.calculate();
+                });
+            } else {
+                // Reset the calculated distances
+                // this.setState({})
+            }
         });
     }
 
