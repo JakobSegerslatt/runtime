@@ -1,12 +1,12 @@
 import './calculator.css';
 import React from 'react';
 import { Checkbox, TextField, MenuItem } from '@material-ui/core';
+import { Timer } from 'papilion';
 // REDUX
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { UPDATE } from '../actions/actions';
 import { store } from '../store';
-import { Timer } from './timer';
 
 enum LenghtType {
     Km = 'km',
@@ -219,7 +219,25 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
      */
     handleChange = (name: string) => (event: any) => {
         let value: any = event.target.value;
-        this.setState({ [name]: value } as any, () => {
+        let statePatch: Partial<IState> = {
+            [name]: value
+        };
+
+        // Add length in meters if length changed
+        if (name === 'length') {
+            switch (this.state.lengthType) {
+                case LenghtType.Km:
+                    statePatch.lengthInMeters = value * 1000;
+                    break;
+                case LenghtType.miles:
+                    statePatch.lengthInMeters = value * 1609.344;;
+                    break;
+                case LenghtType.m:
+                    statePatch.lengthInMeters = value;
+                    break;
+            }
+        }
+        this.setState(statePatch as any, () => {
 
             if (name.match(/paceMinutes|paceSeconds/)) {
                 name = 'pace';
