@@ -84,6 +84,7 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
     timerId: any;
     timerActive = false;
     timer!: Timer;
+    milesConversion = 1609.344;
 
     constructor(props) {
         super(props);
@@ -192,7 +193,7 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
                 pace = pace * 1000 / 3600;
                 break;
             case PaceType.MilesPerHour:
-                pace = pace * 1609.344 / 3600;
+                pace = pace * this.milesConversion / 3600;
                 break;
             case PaceType.MetersPerSecond:
                 pace = pace;
@@ -230,7 +231,7 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
                     statePatch.lengthInMeters = value * 1000;
                     break;
                 case LenghtType.miles:
-                    statePatch.lengthInMeters = value * 1609.344;;
+                    statePatch.lengthInMeters = value * this.milesConversion;
                     break;
                 case LenghtType.m:
                     statePatch.lengthInMeters = value;
@@ -291,7 +292,7 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
                 displayLength = Number(displayLength.toFixed(2));
                 break;
             case LenghtType.miles:
-                displayLength = lengthInMeters / 1609.344;
+                displayLength = lengthInMeters / this.milesConversion;
                 // Convert to maximum 2 decimals
                 displayLength = Number(displayLength.toFixed(2));
                 break;
@@ -306,7 +307,7 @@ export class RtCalculator extends React.PureComponent<IProps, IState> {
     setPace(meters: number, seconds: number, callback?: () => void): any {
         var minutes = seconds / 60;
         var km = meters / 1000;
-        var miles = meters / 1609.344;
+        var miles = meters / this.milesConversion;
         var hours = seconds / 3600;
         var pace = 0;
         var paceMinutes = 0;
